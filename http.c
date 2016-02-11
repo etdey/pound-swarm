@@ -33,7 +33,7 @@ static char *h500 = "500 Internal Server Error",
             *h503 = "503 Service Unavailable",
             *h414 = "414 Request URI too long";
 
-static char *err_response = "HTTP/1.0 %s\r\nContent-Type: text/html\r\nContent-Length: %d\r\nExpires: now\r\nPragma: no-cache\r\nCache-control: no-cache,no-store\r\n\r\n%s";
+static char *err_response = "HTTP/1.0 %s\r\nContent-Type: text/html\r\nContent-Length: %d\r\nExpires: now\r\nPragma: no-cache\r\nCache-control: no-cache,no-store\r\nServer: Pound\r\n\r\n%s";
 
 /*
  * Reply with an error
@@ -89,6 +89,19 @@ redirect_reply(BIO *const c, const char *url, const int code)
     BIO_flush(c);
     return;
 }
+
+/*
+ * Reply with 100 Continue
+ */
+static char *response_100continue = "HTTP/1.1 100 Continue\r\n\r\n";
+static void
+reply_100continue(BIO *const c)
+{
+    BIO_write(c, response_100continue, strlen(response_100continue));
+    BIO_flush(c);
+    return;
+}
+
 
 /*
  * Read and write some binary data
@@ -736,9 +749,16 @@ do_http(thr_arg *arg)
                  * we do NOT support the "Expect: 100-continue" headers
                  * support may involve severe performance penalties (non-responding back-end, etc)
                  * as a stop-gap measure we just skip these headers
+                 *
+                 * When configured for Swarm storage, respond to the client with "100 Continue"
+                 * since back-end won't see the Expect header.
                  */
-                if(!strcasecmp("100-continue", buf))
+                if(!strcasecmp("100-continue", buf)) {
                     headers_ok[n] = 0;
+#ifdef  CARINGO_SWARM
+                    reply_100continue(cl);
+#endif
+                }
                 break;
             case HEADER_ILLEGAL:
                 if(lstn->log_level > 0) {

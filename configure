@@ -580,9 +580,9 @@ MAKEFLAGS=
 # Identity of this package.
 PACKAGE_NAME='pound'
 PACKAGE_TARNAME='pound'
-PACKAGE_VERSION='2.7'
-PACKAGE_STRING='pound 2.7'
-PACKAGE_BUGREPORT='roseg@apsis.ch'
+PACKAGE_VERSION='2.7.swarm'
+PACKAGE_STRING='pound 2.7.swarm'
+PACKAGE_BUGREPORT='eric.dey@caringo.com'
 PACKAGE_URL=''
 
 ac_unique_file="pound.c"
@@ -638,6 +638,7 @@ C_MAXBUF
 C_DH_LEN
 C_T_RSA
 C_SSL
+C_CARINGO_SWARM
 PTHREAD_CFLAGS
 PTHREAD_LIBS
 PTHREAD_CC
@@ -716,6 +717,7 @@ enable_cert1l
 enable_pcreposix
 enable_tcmalloc
 enable_hoard
+enable_swarm
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1350,6 +1352,8 @@ Optional Features:
                           (default: enabled if available)
   --enable-hoard          enable or disable using the hoard library (default:
                           enabled if available and tcmalloc NOT available)
+  --enable-swarm          enable or disable use with Caringo Swarm (default:
+                          disabled)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -3846,6 +3850,13 @@ if test "${enable_hoard+set}" = set; then :
 else
   C_HOARD=yes
 fi
+
+
+# Check whether --enable-swarm was given.
+if test "${enable_swarm+set}" = set; then :
+  enableval=$enable_swarm; test ${enableval} = "yes" && CFLAGS="${CFLAGS} -DCARINGO_SWARM"; C_CARINGO_SWARM="1"
+fi
+
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: *** Checking for libraries ***" >&5

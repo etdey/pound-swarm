@@ -1,4 +1,11 @@
 ------------------------------------------------------------------------
+Release 2.7.swarm
+
+Enhancements:
+    - added support for Caringo Swarm; see README file (Eric Dey)
+    - added automatic response to "Expect: 100-continue" when using Caringo Swarm (Eric Dey)
+
+------------------------------------------------------------------------
 r81 | roseg | 2015-01-26 17:47:53 +0100 (Mon, 26 Jan 2015) | 30 lines
 
 Release 2.7

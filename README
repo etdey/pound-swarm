@@ -136,6 +136,8 @@ INSTALLATION
         --with-group=group -- name of installed binaries group (default is
         system-dependent).
 
+        --enable-swarm -- enable for use with Caringo Swarm (default: disabled).
+
     4.  Check that the resulting Makefile is correct and possibly
         adjust flags as needed on your system. Compile:
 
@@ -766,6 +768,62 @@ WebDAV
     These changes are also required to access a Subversion server via
     Pound.
 
+
+CARINGO SWARM
+
+    To use Pound as front-end to Caringo Swarm clusters, the package must be
+    built with the '--enable-swarm' flag. You can confirm this by running:
+    
+        $ pound -V
+    
+    When enabled for Swarm, Pound will reply to "Expect: 100-continue" headers
+    from the client with "100 Continue" and will not pass the header along to
+    the backend service.
+    
+    In order to use Swarm's native SCSP protocol, you must set "xHTTP 5" in
+    order to authorize its set of HTTP verbs.
+    
+        xHTTP 5
+    
+    When using Pound as an SSL/TLS front-end, it is recommended to inject
+    this request header with the HTTPS listener:
+    
+        AddHeader "X-Forwarded-Proto: https"
+    
+    When Pound is being used as a protocol switcher for the SCSP/S3 protocols
+    for the Swarm cloud gateway, a combination of URI and header checking is
+    required in order to differentiate the two protocols. In this example, the
+    SCSP backend is listing on port 8080 and the S3 backend is on port 8090:
+    
+        # S3 Authorized Request
+        Service
+            HeadRequire "Authorization:\ +AWS"
+            BackEnd
+                Address localhost
+                Port    8090
+            End
+        End
+
+        # S3 Pre-signed URL
+        Service
+            URL "[?&]AWSAccessKeyId="
+            BackEnd
+                Address localhost
+                Port    8090
+            End
+        End
+
+        # All other traffic
+        Service
+            BackEnd
+                Address localhost
+                Port    8080
+            End
+        End
+    
+    The example shows the SCSP backend as the default protocol handler when
+    the S3 authentication methods are not included with the request.
+    
 
 OTHER ISSUES
 
