@@ -376,6 +376,11 @@ NOTIFY, BPROPFIND, BPROPPATCH, POLL, BMOVE, BCOPY, BDELETE, CONNECT).
 .IP
 .I 4
 additionally allow MS RPC extensions verbs (RPC_IN_DATA, RPC_OUT_DATA).
+.IP
+.I 5
+accept Caringo Swarm HTTP requests (GET, POST, HEAD, PUT, DELETE, COPY,
+APPEND, SEND, HOLD, GEN, RELEASE). Only available when compiled with
+"--enable-swarm" build flag.
 .TP
 \fBClient\fR value
 Override the global
@@ -590,7 +595,7 @@ Override the global
 setting.
 .TP
 \fBHeadRequire\fR "pattern"
-The request must contain at least on header matching the given pattern.
+The request must contain at least one header matching the given pattern.
 Multiple
 .I HeadRequire
 directives may be defined per service, in which case all of them must
