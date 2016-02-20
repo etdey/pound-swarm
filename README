@@ -771,8 +771,8 @@ WebDAV
 
 CARINGO SWARM
 
-    To use Pound as front-end to Caringo Swarm clusters, the package must be
-    built with the '--enable-swarm' flag. You can confirm this by running:
+    To use Pound as front-end to Caringo Swarm clusters, Pound must be built
+    with the '--enable-swarm' flag. You can confirm this by running:
     
         $ pound -V
     
@@ -780,8 +780,8 @@ CARINGO SWARM
     from the client with "100 Continue" and will not pass the header along to
     the backend service.
     
-    In order to use Swarm's native SCSP protocol, you must set "xHTTP 5" in
-    order to authorize its set of HTTP verbs.
+    Swarm's native SCSP protocol requires that you set "xHTTP 5" in order to
+    authorize its set of HTTP verbs.
     
         xHTTP 5
     
@@ -806,7 +806,7 @@ CARINGO SWARM
 
         # S3 Pre-signed URL
         Service
-            URL "[?&]AWSAccessKeyId="
+            URL "[?&](AWSAccessKeyId|X-Amz-Credential)="
             BackEnd
                 Address localhost
                 Port    8090
