@@ -1,0 +1,155 @@
+#
+# pound.cfg
+#
+# This is an example configuration using Pound as a front-end load
+# balancer and SSL/TLS offload engine with Caringo Swarm's CloudScaler
+# gateway.
+#
+# In this example, there are two CloudScaler gateway servers with listening
+# ports for the SCSP and S3 protocols as shown in this table:
+#
+#   Server Address    SCSP Port    S3 Port
+#     10.20.30.100         8080       8090
+#     10.20.30.101         8080       8090
+#
+#
+# For SSL/TLS encryption, Pound uses a combined PEM file that contains the
+# server's private key, the server's certificate (public key), and any 
+# intermediate CA certificates all in one file. Since this file contains the 
+# server's private key, it should be kept confidential on the system. For 
+# this example, the combined file will be:
+#
+#   /etc/ssl/private/server.pem
+#
+#
+
+User "pound"
+Group "pound"
+Control "/var/lib/pound/pound.cfg"
+
+LogFacility local2
+LogLevel        4
+
+# check backend every X secs:
+Alive           5
+
+# client timeout to start sending request
+Client          30
+
+# backend timeout to start sending response
+TimeOut         15
+
+
+ListenHTTP
+    Address 0.0.0.0
+    Port 80
+
+    # allow Caringo Swarm HTTP verbs
+    xHTTP 5
+
+    # inform the backend what protocol is being used
+    AddHeader "X-Forwarded-Proto: http"
+
+    # S3 Authorized Request
+    Service
+        HeadRequire "Authorization:\ +AWS"
+
+        BackEnd
+            Address 10.20.30.100
+            Port    8090
+        End
+
+        BackEnd
+            Address 10.20.30.101
+            Port    8090
+        End
+    End
+
+    # S3 Pre-signed URL
+    Service
+        URL "[?&](AWSAccessKeyId|X-Amz-Credential)="
+
+        BackEnd
+            Address 10.20.30.100
+            Port    8090
+        End
+
+        BackEnd
+            Address 10.20.30.101
+            Port    8090
+        End
+    End
+
+    # All other traffic to SCSP
+    Service
+        BackEnd
+            Address 10.20.30.100
+            Port    8080
+        End
+
+        BackEnd
+            Address 10.20.30.101
+            Port    8080
+        End
+    End
+End
+
+
+ListenHTTPS
+    Address 0.0.0.0
+    Port    443
+
+    # encryption configuration
+    Disable TLSv1
+    Ciphers HIGH:!aNULL:!MD5:!DSS:!RC4
+    Cert    "/etc/ssl/private/server.pem"
+
+    # allow Caringo Swarm verbs
+    xHTTP 5
+
+    # inform the backend what protocol is being used
+    AddHeader "X-Forwarded-Proto: https"
+
+    # S3 Authorized Request
+    Service
+        HeadRequire "Authorization:\ +AWS"
+
+        BackEnd
+            Address 10.20.30.100
+            Port    8090
+        End
+
+        BackEnd
+            Address 10.20.30.101
+            Port    8090
+        End
+    End
+
+    # S3 Pre-signed URL
+    Service
+        URL "[?&](AWSAccessKeyId|X-Amz-Credential)="
+
+        BackEnd
+            Address 10.20.30.100
+            Port    8090
+        End
+
+        BackEnd
+            Address 10.20.30.101
+            Port    8090
+        End
+    End
+
+    # All other traffic to SCSP
+    Service
+        BackEnd
+            Address 10.20.30.100
+            Port    8080
+        End
+
+        BackEnd
+            Address 10.20.30.101
+            Port    8080
+        End
+    End
+End
