@@ -100,9 +100,9 @@ ListenHTTPS
     Port    443
 
     # encryption configuration
-    Disable TLSv1
-    Ciphers HIGH:!aNULL:!MD5:!DSS:!RC4
     Cert    "/etc/ssl/private/server.pem"
+    Disable TLSv1
+    Ciphers "HIGH:!aNULL:!MD5:!DSS:!RC4"
 
     # allow Caringo Swarm verbs
     xHTTP 5
