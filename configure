@@ -580,8 +580,8 @@ MAKEFLAGS=
 # Identity of this package.
 PACKAGE_NAME='pound'
 PACKAGE_TARNAME='pound'
-PACKAGE_VERSION='2.7.swarm'
-PACKAGE_STRING='pound 2.7.swarm'
+PACKAGE_VERSION='2.7.swarm.1'
+PACKAGE_STRING='pound 2.7.swarm.1'
 PACKAGE_BUGREPORT='eric.dey@caringo.com'
 PACKAGE_URL=''
 

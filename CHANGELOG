@@ -1,4 +1,11 @@
 ------------------------------------------------------------------------
+Release 2.7.swarm.1
+
+Enhancements:
+    - added OPTIONS verb to the allowed list for Swarm (xHTTP 5) requests
+    - added detailed reporting of the phase of copy_bin() that threw an error
+
+------------------------------------------------------------------------
 Release 2.7.swarm
 
 Enhancements:
