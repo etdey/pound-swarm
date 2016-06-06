@@ -41,7 +41,7 @@ static char *err_response = "HTTP/1.0 %s\r\nContent-Type: text/html\r\nContent-L
 static void
 err_reply(BIO *const c, const char *head, const char *txt)
 {
-    BIO_printf(c, err_response, head, strlen(txt), txt);
+    BIO_printf(c, err_response, head, (int)strlen(txt), txt);
     BIO_flush(c);
     return;
 }
@@ -83,7 +83,7 @@ redirect_reply(BIO *const c, const char *url, const int code)
         safe_url, safe_url);
     snprintf(rep, sizeof(rep),
         "HTTP/1.0 %d %s\r\nLocation: %s\r\nContent-Type: text/html\r\nContent-Length: %d\r\n\r\n",
-        code, code_msg, safe_url, strlen(cont));
+        code, code_msg, safe_url, (int)strlen(cont));
     BIO_write(c, rep, strlen(rep));
     BIO_write(c, cont, strlen(cont));
     BIO_flush(c);
@@ -106,27 +106,43 @@ reply_100continue(BIO *const c)
 /*
  * Read and write some binary data
  */
+const char *copy_bin_errmsg[5];
+const char *copy_bin_errmsg0 = "success";
+const char *copy_bin_errmsg1 = "reader socket";
+const char *copy_bin_errmsg2 = "reader socket no bytes";
+const char *copy_bin_errmsg3 = "writer socket";
+const char *copy_bin_errmsg4 = "writer socket flush";
 static int
 copy_bin(BIO *const cl, BIO *const be, LONG cont, LONG *res_bytes, const int no_write)
 {
     char        buf[MAXBUF];
     int         res;
+    static int  errmsgInitialized = 0;
+    
+    if (errmsgInitialized == 0) {
+        errmsgInitialized = 1;
+        copy_bin_errmsg[0] = copy_bin_errmsg0;
+        copy_bin_errmsg[1] = copy_bin_errmsg1;
+        copy_bin_errmsg[2] = copy_bin_errmsg2;
+        copy_bin_errmsg[3] = copy_bin_errmsg3;
+        copy_bin_errmsg[4] = copy_bin_errmsg4;
+    }
 
     while(cont > L0) {
         if((res = BIO_read(cl, buf, cont > MAXBUF? MAXBUF: cont)) < 0)
-            return -1;
+            return 1;
         else if(res == 0)
-            return -2;
+            return 2;
         if(!no_write)
             if(BIO_write(be, buf, res) != res)
-                return -3;
+                return 3;
         cont -= res;
         if(res_bytes)
             *res_bytes += res;
     }
     if(!no_write)
         if(BIO_flush(be) != 1)
-            return -4;
+            return 4;
     return 0;
 }
 
@@ -224,9 +240,9 @@ copy_chunks(BIO *const cl, BIO *const be, LONG *res_bytes, const int no_write, c
         }
 
         if(cont > L0) {
-            if(copy_bin(cl, be, cont, res_bytes, no_write)) {
+            if(res = copy_bin(cl, be, cont, res_bytes, no_write)) {
                 if(errno)
-                    logmsg(LOG_NOTICE, "(%lx) error copy chunk cont: %s", pthread_self(), strerror(errno));
+                    logmsg(LOG_NOTICE, "(%lx) error during copy chunk (%s) cont: %s", pthread_self(), copy_bin_errmsg[res], strerror(errno));
                 return -4;
             }
         } else
@@ -1195,12 +1211,12 @@ do_http(thr_arg *arg)
             }
         } else if(cont > L0 && is_rpc != 1) {
             /* had Content-length, so do raw reads/writes for the length */
-            if(copy_bin(cl, be, cont, NULL, cur_backend->be_type)) {
+            if(res = copy_bin(cl, be, cont, NULL, cur_backend->be_type)) {
                 str_be(buf, MAXBUF - 1, cur_backend);
                 end_req = cur_time();
                 addr2str(caddr, MAXBUF - 1, &from_host, 1);
-                logmsg(LOG_NOTICE, "(%lx) e500 for %s error copy client cont to %s/%s: %s (%.3f sec)",
-                    pthread_self(), caddr, buf, request, strerror(errno), (end_req - start_req) / 1000000.0);
+                logmsg(LOG_NOTICE, "(%lx) e500 error for %s during client request (%s) to %s/%s: %s (%0.3f sec)",
+                    pthread_self(), caddr, copy_bin_errmsg[res], buf, request, strerror(errno), (end_req - start_req) / 1000000.0);
                 err_reply(cl, h500, lstn->err500);
                 clean_all();
                 return;
@@ -1496,9 +1512,9 @@ do_http(thr_arg *arg)
                     }
                 } else if(cont >= L0) {
                     /* may have had Content-length, so do raw reads/writes for the length */
-                    if(copy_bin(be, cl, cont, &res_bytes, skip)) {
+                    if(res = copy_bin(be, cl, cont, &res_bytes, skip)) {
                         if(errno)
-                            logmsg(LOG_NOTICE, "(%lx) error copy server cont: %s", pthread_self(), strerror(errno));
+                            logmsg(LOG_NOTICE, "(%lx) error for %s during server response (%s) to %s: %s", pthread_self(), caddr, copy_bin_errmsg[res], request, strerror(errno));
                         clean_all();
                         return;
                     }
